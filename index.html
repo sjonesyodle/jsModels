@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>JS Models</title>
+</head>
+<body>
+
+
+	
+<h3 id="">Fill out the form below to<br id="">
+	request more information</h3>
+<form id="" action="::robot::" class="contact" method="post">
+	<div id="" class="row-fluid ">
+		<div id="" class="span12 formWrap">
+			<input id="first_name" data-placeholder="First Name:* " name="FirstName" type="text">
+			<input id="last_name" data-placeholder="Last Name:* " name="LastName" type="text">
+			<input id="email" data-placeholder="Email:* " name="Email" type="email">
+			<input id="phone" data-placeholder="Phone:* " name="Phone" type="tel">
+			<select id="locations" name="location">
+				<option id="" value="" selected="">Choose Location</option>
+				<option id="" value="!!!!!!!">ADD LOCATION NAME</option>
+			</select>
+			<textarea name="comments" id="" data-placeholder="Questions/Comments:*" value=""></textarea>
+			<p id=""> Sign-Up For Our newsletter </p>
+			<div id="" class="row-fluid radio">
+				<div id="" class="span12">
+					<input id="yes" name="receiveThirdPtyEmails" value="TRUE" checked="" type="radio">
+					<label id="" for="yes">Yes</label>
+					<input id="no" name="receiveThirdPtyEmails" value="FALSE" type="radio">
+					<label id="" for="no">No</label>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<input name="services" value="Underarms" type="hidden">
+	<input id="" value="2cb7b806-ec0c-448a-9058-a9f4bcbe375d" name="refId" type="hidden">
+	<input id="" value="0" name="preferredContactMethod" type="hidden">
+	<input id="" value="0" name="preferredContactTime" type="hidden">
+	<input id="" value="0" name="receiveIdealEmails" type="hidden">
+	<input id="" class ="submit" value="Request Information" type="submit">
+	<input id="" name="redirect" value="contact_success.html" type="hidden">
+</form>
+
+
+
+<script src="es5shim.js"></script>
+<script src="cluster.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+
+	var jsModels = new Cluster();
+
+
+	jsModels.enhance({
+
+		util : {
+
+			isNode : function ( jNode ) {
+    			var node = typeof jNode === "string" ? $( $.trim(jNode) ) : jNode;
+    			return node && node.length > 0;
+    		}
+
+		},
+
+		tests : function () {
+			var 
+			that = this;
+			testAttribute = function ( node, attr, value ) {
+				return node.attr( attr ) === value;
+			};	
+
+			this.tests = {
+
+				"value" : function ( value ) {
+					return testAttribute( this, "value", value );
+				},
+				"id" : function ( value ) {
+					return testAttribute( this, "id", value );
+				},
+				"class" : function ( value ) {
+					return testAttribute( this, "class", value );
+				},
+				"name" : function ( value ) {
+					return testAttribute( this, "name", value );
+				},
+
+				"node" : function ( nodeString ) {
+					return that.util.isNode( nodeString ) ? $( nodeString ) : false;
+				},
+
+				"type" : function ( value ) {
+					return testAttribute( this, "type", value );
+				}
+			};
+ 		},
+
+ 		required : [ "node" ]
+
+	});
+
+
+	// collect modules
+	jsModels.collect([
+
+
+		// init builds
+		{
+
+			init : function () {
+				this.cluster.tests();
+			}
+
+		},
+
+
+		//reporting
+		{	
+
+			init : function () {
+				this._sub("Error", function(error){
+					console.log(error);
+				});
+			}
+
+		},
+
+
+		// do node lookups and associate live node with models
+		{
+
+			testKey : "node",
+
+			errors : 0,
+
+			init : function () {
+				var 
+				that   = this,
+				models = that.cluster.models;
+				that._sub("checkpoint_complete", function (){
+					var i = 0;
+
+					for ( i in models ) {
+						if ( !(models[i].node = that.select( models[i].node )) ) that.errors++;
+					}
+
+					if ( that.errors < 1 ) that.complete();
+				});
+			},
+
+			select : function ( nodeString ) {
+				var node = this.cluster.tests[ this.testKey ]( nodeString );
+				if ( node ) return node;
+				else this._pub("Error", "Node not found : " + nodeString);
+			},
+
+			complete : function () {
+				this._pub("node_lookup_complete");
+			}
+
+		},
+
+
+
+
+		// validate models
+		{	
+
+			testGroupKey : "tests",
+			okToRunTests : false,
+
+			init : function () {
+				var that = this;
+
+				that._sub("node_lookup_complete", function () {
+					that.validateTests();
+					!!that.okToRunTests && that.runTests();
+				});
+			},	
+
+			validateTests : function () {
+				var
+				that   = this, 
+				models = this.cluster.models, 
+				tests  = this.cluster.tests,
+				testGrpKey = this.testGroupKey,
+				model, test, errors = 0;
+
+				models.forEach(function(el, i , arr){
+					var i;
+
+					if ( !el[testGrpKey] ) {
+						that._pub("Error", "Error : No defined tests" + "[" + i + "]");
+						errors++;
+						return;
+					}
+
+					for ( i in el[testGrpKey] ) {
+						if ( !( i in tests ) ) {
+							that._pub("Error", "Error : Test does not exist : " + i);
+							errors++;
+							return;
+						}
+					}
+				});
+
+				that.okToRunTests = errors > 0 ? false : true;
+			},
+
+			runTests : function () {
+				var 
+				that       = this,
+				models     = this.cluster.models, 
+				tests      = this.cluster.tests,
+				testGrpKey = this.testGroupKey,
+				errors     = [];
+
+
+				models.forEach(function(el, i, arr){
+
+				});
+
+			}
+
+		},
+
+
+
+
+		 // param checkpoint
+		{
+			
+			init : function () {
+				if ( this.checkInput() ) this.complete();
+			},
+
+			checkInput : function () {
+				var models = this.cluster.models, i;
+
+				if ( !models || !models.length ) return false;
+
+				for ( i in models ) {
+					if ( typeof models[i] !== "object" || !this.hasReqProps( models[i] ) ) return false;
+				}
+
+				return true;
+			},
+
+			hasReqProps : function ( model ) {
+				var i;
+
+				for ( i in this.cluster.required ) {
+					if ( !( this.cluster.required[i] in model ) ) return false;
+				}
+
+				return true;
+			},	
+
+			complete : function () {
+				this._pub("checkpoint_complete");
+			}	
+		}
+
+
+
+	]);
+	// end modules
+
+
+
+	jsModels.start({
+
+		models : [
+
+			{
+				node : "#first_name",
+
+				tests : {
+					id   : "first_name",
+					name : "FirstName",
+					type : "text"
+				}
+
+			},
+
+			{
+				node : "#first_name",
+
+				tests : {
+					id   : "first_name",
+					name : "FirstName",
+					type : "text"
+				}
+
+			},
+
+			{
+				node : "#first_name",
+
+				tests : {
+					id   : "first_name",
+					name : "FirstName",
+					type : "text"
+				}
+
+			}
+
+		]
+
+	});
+
+</script>
+
+</body>
+</html>
