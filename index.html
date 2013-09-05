@@ -51,18 +51,16 @@
 
 <script>
 
-	var jsModels = new Cluster();
+	var nodeModelValidator = new Cluster();
 
 
-	jsModels.enhance({
+	nodeModelValidator.enhance({
 
 		util : {
-
 			isNode : function ( jNode ) {
     			var node = typeof jNode === "string" ? $( $.trim(jNode) ) : jNode;
     			return node && node.length > 0;
     		}
-
 		},
 
 		tests : function () {
@@ -103,7 +101,7 @@
 
 
 	// collect modules
-	jsModels.collect([
+	nodeModelValidator.collect([
 
 
 		// init builds
@@ -163,8 +161,6 @@
 		},
 
 
-
-
 		// validate models
 		{	
 
@@ -176,7 +172,12 @@
 
 				that._sub("node_lookup_complete", function () {
 					that.validateTests();
-					!!that.okToRunTests && that.runTests();
+
+					if ( that.okToRunTests ) {
+						that.runTests();
+						that.report();
+					}
+
 				});
 			},	
 
@@ -214,19 +215,28 @@
 				that       = this,
 				models     = this.cluster.models, 
 				tests      = this.cluster.tests,
-				testGrpKey = this.testGroupKey,
-				errors     = [];
+				testGrpKey = this.testGroupKey;
 
 
 				models.forEach(function(el, i, arr){
+					var testItem, test, errors = [];
+
+					for ( testItem in el[testGrpKey] ) {
+						test = tests[testItem].call( el.node, el[testGrpKey][testItem] );
+						if ( !test ) errors.push( "Test Failed on " + testItem  );
+					}
+
+					if ( errors.length > 0 ) el.errors = errors;
 
 				});
 
+			},
+
+			report : function () {
+				console.log(this.cluster.models);
 			}
 
 		},
-
-
 
 
 		 // param checkpoint
@@ -270,7 +280,7 @@
 
 
 
-	jsModels.start({
+	nodeModelValidator.start({
 
 		models : [
 
@@ -286,23 +296,12 @@
 			},
 
 			{
-				node : "#first_name",
+				node : "#last_name",
 
 				tests : {
-					id   : "first_name",
-					name : "FirstName",
-					type : "text"
-				}
-
-			},
-
-			{
-				node : "#first_name",
-
-				tests : {
-					id   : "first_name",
-					name : "FirstName",
-					type : "text"
+					id   : "first_nasdfme",
+					name : "FirstNasdfme",
+					type : "tesdfxt"
 				}
 
 			}
